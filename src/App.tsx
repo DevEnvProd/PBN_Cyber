@@ -61,9 +61,6 @@ export default function App() {
       <header className="fixed top-0 left-0 right-0 z-[100] bg-transparent">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded flex items-center justify-center font-bold text-black text-xl">
-              CP
-            </div>
             <span className="font-bold text-2xl tracking-tighter text-white">
               CYBER<span className="text-cyber-cyan">PULSE</span>
             </span>
@@ -380,9 +377,6 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-12 gap-16 mb-24">
             <div className="md:col-span-4">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 bg-white rounded flex items-center justify-center font-bold text-black text-xl">
-                  CP
-                </div>
                 <span className="font-bold text-2xl tracking-tighter text-white">
                   CYBER<span className="text-cyber-cyan">PULSE</span>
                 </span>
