@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-cyber-bg: #050505;
+  --color-cyber-cyan: #22d3ee;
+  --color-cyber-gold: #fbbf24;
+  --color-cyber-card: #0f0f0f;
+  --color-cyber-border: #1a1a1a;
+  --font-display: 'Anton', sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-cyber-bg text-slate-200 font-sans antialiased;
+  }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  display: inline-block;
+  white-space: nowrap;
+  animation: marquee 30s linear infinite;
+}
+
+.cyber-glow-cyan {
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+}
+
+.cyber-glow-gold {
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.cyber-border-gradient {
+  border: 1px solid transparent;
+  background: linear-gradient(var(--color-cyber-card), var(--color-cyber-card)) padding-box,
+              linear-gradient(to right, var(--color-cyber-cyan), var(--color-cyber-gold)) border-box;
+}
+
+.video-overlay {
+  background: linear-gradient(to bottom, rgba(5, 5, 5, 0.4) 0%, rgba(5, 5, 5, 0.8) 70%, #050505 100%);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  line-height: 0.85;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.glass-card {
+  background: rgba(15, 15, 15, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
