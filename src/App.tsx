@@ -14,24 +14,20 @@ import {
   Pause,
   ArrowRight,
   Zap,
-  Flame
+  Flame,
+  Globe,
+  Award
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useRef, useEffect } from 'react';
+import { ARTICLES, Article } from './data/articles';
+import ArticleDetail from './components/ArticleDetail';
 
 const CATEGORIES = [
-  { id: 1, name: 'PC GAMING', icon: <Gamepad2 className="w-6 h-6" />, threads: '12.4k', posts: '89.2k', color: 'from-blue-500/20 to-cyan-500/20' },
-  { id: 2, name: 'MOBILE LEGENDS', icon: <TrendingUp className="w-6 h-6" />, threads: '8.1k', posts: '45.6k', color: 'from-purple-500/20 to-pink-500/20' },
-  { id: 3, name: 'CASINO STRATEGY', icon: <Trophy className="w-6 h-6" />, threads: '5.2k', posts: '22.1k', color: 'from-amber-500/20 to-orange-500/20' },
-  { id: 4, name: 'LOCAL TOURNAMENTS', icon: <Users className="w-6 h-6" />, threads: '2.8k', posts: '15.4k', color: 'from-emerald-500/20 to-teal-500/20' },
-];
-
-const THREADS = [
-  { id: 1, title: 'Best Loadout for Warzone Season 3 Meta?', author: 'GhostRider99', replies: 42, views: '1.2k', time: '2h ago', category: 'PC GAMING' },
-  { id: 2, title: 'MLBB: How to counter the new Fanny buff?', author: 'SlayerX', replies: 156, views: '5.4k', time: '5h ago', category: 'MOBILE LEGENDS' },
-  { id: 3, title: 'Casino Strategy: Why the Martingale system is a trap', author: 'ProPunter', replies: 89, views: '3.1k', time: '1d ago', category: 'CASINO STRATEGY' },
-  { id: 4, title: 'JB Tournament: Registration open for Johor Bahru Open 2026', author: 'Admin_Z', replies: 234, views: '10.2k', time: '3h ago', category: 'LOCAL TOURNAMENTS' },
-  { id: 5, title: 'Building a $2000 Pro Gaming Rig - Parts List', author: 'TechGuru', replies: 67, views: '2.5k', time: '12h ago', category: 'PC GAMING' },
+  { id: 1, name: 'PC GAMING', icon: <Gamepad2 className="w-6 h-6" />, threads: '5 Articles', posts: 'PC, Warzone, Hardware Guides', color: 'from-blue-500/20 to-cyan-500/20' },
+  { id: 2, name: 'MOBILE LEGENDS', icon: <TrendingUp className="w-6 h-6" />, threads: '5 Articles', posts: 'MLBB Meta, Counter-Picks', color: 'from-purple-500/20 to-pink-500/20' },
+  { id: 3, name: 'CASINO STRATEGY', icon: <Trophy className="w-6 h-6" />, threads: '5 Articles', posts: 'RTP Guides, Winbox Strategies', color: 'from-amber-500/20 to-orange-500/20' },
+  { id: 4, name: 'LOCAL TOURNAMENTS', icon: <Users className="w-6 h-6" />, threads: '5 Articles', posts: 'Malaysia Cup, JB Open 2026', color: 'from-emerald-500/20 to-teal-500/20' },
 ];
 
 const CONTRIBUTORS = [
@@ -42,7 +38,20 @@ const CONTRIBUTORS = [
 
 export default function App() {
   const [isPaused, setIsPaused] = useState(false);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string>('ALL');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Filter articles based on active tab and search query
+  const filteredArticles = ARTICLES.filter(art => {
+    const matchesTab = activeTab === 'ALL' || art.category === activeTab;
+    const matchesSearch = searchQuery === '' || 
+      art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      art.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      art.metaDescription.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
+  });
 
   const toggleVideo = () => {
     if (videoRef.current) {
@@ -67,10 +76,10 @@ export default function App() {
           </div>
 
           <nav className="hidden lg:flex items-center gap-8 text-sm font-bold tracking-widest uppercase text-white/70">
-            <a href="#" className="hover:text-white transition-colors">Forums</a>
-            <a href="#" className="hover:text-white transition-colors">Tournaments</a>
-            <a href="#" className="hover:text-white transition-colors">Gear</a>
-            <a href="#" className="hover:text-white transition-colors">Support</a>
+            <button key="forums" onClick={() => { setSelectedSlug(null); setActiveTab('ALL'); const el = document.getElementById("discussions-container"); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-white transition-colors cursor-pointer bg-transparent border-none">Forums</button>
+            <button key="gaming" onClick={() => { setSelectedSlug(null); setActiveTab('PC GAMING'); const el = document.getElementById("discussions-container"); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-white transition-colors cursor-pointer bg-transparent border-none">PC Gaming</button>
+            <button key="ml" onClick={() => { setSelectedSlug(null); setActiveTab('MOBILE LEGENDS'); const el = document.getElementById("discussions-container"); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-white transition-colors cursor-pointer bg-transparent border-none">Mobile Legends</button>
+            <button key="casino" onClick={() => { setSelectedSlug(null); setActiveTab('CASINO STRATEGY'); const el = document.getElementById("discussions-container"); if (el) el.scrollIntoView({ behavior: 'smooth' }); }} className="hover:text-white transition-colors cursor-pointer bg-transparent border-none">Casino Guides</button>
           </nav>
 
           <div className="flex items-center gap-6">
@@ -78,8 +87,15 @@ export default function App() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50" />
               <input 
                 type="text" 
-                placeholder="Search..." 
-                className="bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-white/30 transition-all w-40 focus:w-64"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setSelectedSlug(null);
+                  const el = document.getElementById("discussions-container");
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                placeholder="Search articles..." 
+                className="bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-white/30 transition-all w-48 focus:w-80 text-white placeholder-white/30"
               />
             </div>
             <button className="bg-white text-black px-6 py-2.5 rounded font-bold text-sm hover:bg-cyber-cyan transition-all uppercase tracking-wider">
@@ -128,10 +144,26 @@ export default function App() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="w-full sm:w-auto bg-cyber-cyan text-black px-10 py-4 rounded font-bold text-sm uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2 group">
+              <button 
+                onClick={() => {
+                  setSelectedSlug(null);
+                  setActiveTab('ALL');
+                  const el = document.getElementById("discussions-container");
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full sm:w-auto bg-cyber-cyan text-black px-10 py-4 rounded font-bold text-sm uppercase tracking-widest hover:bg-white transition-all flex items-center justify-center gap-2 group cursor-pointer"
+              >
                 Enter Forums <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
-              <button className="w-full sm:w-auto bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-4 rounded font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all">
+              <button 
+                onClick={() => {
+                  setSelectedSlug(null);
+                  setActiveTab('LOCAL TOURNAMENTS');
+                  const el = document.getElementById("discussions-container");
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="w-full sm:w-auto bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-4 rounded font-bold text-sm uppercase tracking-widest hover:bg-white/20 transition-all cursor-pointer"
+              >
                 View Tournaments
               </button>
             </div>
@@ -173,33 +205,38 @@ export default function App() {
           <section>
             <div className="flex items-end justify-between mb-12">
               <div>
-                <span className="text-xs font-bold text-cyber-cyan uppercase tracking-[0.3em] mb-2 block">Explore</span>
-                <h2 className="text-4xl font-bold text-white tracking-tight">FORUM CATEGORIES</h2>
+                <span className="text-xs font-bold text-cyber-cyan uppercase tracking-[0.3em] mb-2 block">Explore Forums</span>
+                <h2 className="text-4xl font-bold text-white tracking-tight">DISCUSSIONS BY TOPICS</h2>
               </div>
               <div className="hidden sm:block h-[1px] flex-1 mx-12 bg-white/10" />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {CATEGORIES.map((cat, idx) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+              {CATEGORIES.map((cat) => (
                 <motion.div 
                   key={cat.id}
+                  onClick={() => {
+                    setActiveTab(cat.name);
+                    setSelectedSlug(null);
+                    const el = document.getElementById("discussions-container");
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className={`group relative p-8 rounded-2xl border border-white/5 overflow-hidden transition-all hover:border-white/20 cursor-pointer bg-gradient-to-br ${cat.color}`}
+                  className={`group relative p-8 rounded-2xl border ${activeTab === cat.name ? 'border-cyber-cyan bg-white/[0.06]' : 'border-white/5 bg-white/[0.01]'} overflow-hidden transition-all hover:border-white/20 cursor-pointer bg-gradient-to-br ${cat.color}`}
                 >
-                  <div className="relative z-10">
+                  <div className="relative z-10 font-sans">
                     <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform">
                       {cat.icon}
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-2 tracking-tight">{cat.name}</h3>
-                    <p className="text-white/50 text-sm mb-8 leading-relaxed">
-                      Deep dive into strategies, meta updates, and community insights.
+                    <p className="text-white/50 text-sm mb-4 leading-relaxed">
+                      {cat.posts}
                     </p>
                     <div className="flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-white/40">
-                      <span>{cat.threads} Threads</span>
-                      <span>{cat.posts} Posts</span>
+                      <span>{cat.threads}</span>
+                      <span className="text-cyber-cyan font-semibold group-hover:underline flex items-center gap-1">Browse topics <ArrowRight className="w-3 h-3" /></span>
                     </div>
                   </div>
                   <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -215,7 +252,8 @@ export default function App() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative p-8 rounded-2xl overflow-hidden border border-amber-500/30 shadow-2xl min-h-[300px] flex items-center"
+            className="relative p-8 rounded-2xl overflow-hidden border border-amber-500/30 shadow-2xl min-h-[300px] flex items-center cursor-pointer"
+            onClick={() => window.open('https://winbox666.com', '_blank')}
           >
             <video 
               autoPlay 
@@ -230,66 +268,134 @@ export default function App() {
             
             <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 w-full">
               <div>
-                <h3 className="text-4xl font-bold text-white mb-2 tracking-tight drop-shadow-[0_4px_2px_rgba(0,0,0,0.8)]">WIN BIG WITH WINBOX 888</h3>
+                <h3 className="text-4xl font-bold text-white mb-2 tracking-tight drop-shadow-[0_4px_2px_rgba(0,0,0,0.8)]">WIN BIG WITH WINBOX</h3>
                 <p className="text-amber-100 text-lg drop-shadow-[0_2px_1px_rgba(0,0,0,0.8)]">Join the elite winners circle and claim your massive prize today!</p>
               </div>
-              <button className="bg-white text-amber-900 px-8 py-3 rounded font-bold text-sm uppercase tracking-widest hover:bg-amber-100 transition-all shadow-lg">
+              <button className="bg-white text-amber-900 px-8 py-3 rounded font-bold text-sm uppercase tracking-widest hover:bg-amber-100 transition-all shadow-lg shrink-0">
                 Play Now
               </button>
             </div>
           </motion.div>
 
-          {/* Latest Threads - Feed Style */}
-          <section>
-            <div className="flex items-end justify-between mb-12">
-              <div>
-                <span className="text-xs font-bold text-cyber-gold uppercase tracking-[0.3em] mb-2 block">Live Feed</span>
-                <h2 className="text-4xl font-bold text-white tracking-tight">LATEST DISCUSSIONS</h2>
-              </div>
-              <button className="text-xs font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors flex items-center gap-2">
-                View All Feed <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {THREADS.map((thread, idx) => (
-                <motion.div 
-                  key={thread.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05 }}
-                  className="group flex items-center gap-6 p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all cursor-pointer"
+          {/* Latest Threads - Active content switching for indexing and smooth single page experience */}
+          <section id="discussions-container" className="scroll-mt-24">
+            <AnimatePresence mode="wait">
+              {selectedSlug ? (
+                <motion.div
+                  key="detail"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-white/5 border border-white/5 group-hover:border-cyber-cyan transition-colors">
-                    <span className="text-lg font-bold text-white">{thread.replies}</span>
-                    <span className="text-[8px] uppercase tracking-widest text-white/40">Replies</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/10 text-white/60 uppercase tracking-wider">
-                        {thread.category}
-                      </span>
-                      <span className="text-[10px] text-white/30 uppercase tracking-widest">{thread.time}</span>
-                    </div>
-                    <h3 className="text-lg font-bold text-white/90 group-hover:text-cyber-cyan transition-colors truncate">
-                      {thread.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="w-5 h-5 rounded-full bg-white/10 overflow-hidden">
-                        <img src={`https://picsum.photos/seed/${thread.author}/20/20`} alt="" />
-                      </div>
-                      <span className="text-xs text-white/40 font-medium">{thread.author}</span>
-                    </div>
-                  </div>
-                  <div className="hidden md:block text-right">
-                    <div className="text-sm font-bold text-white/60">{thread.views}</div>
-                    <div className="text-[8px] uppercase tracking-widest text-white/30">Views</div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-white/20 group-hover:text-white transition-colors" />
+                  <ArticleDetail slug={selectedSlug} onBack={() => setSelectedSlug(null)} />
                 </motion.div>
-              ))}
-            </div>
+              ) : (
+                <motion.div
+                  key="list"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12 border-b border-white/5 pb-8">
+                    <div>
+                      <span className="text-xs font-bold text-cyber-gold uppercase tracking-[0.3em] mb-2 block">Live Feed</span>
+                      <h2 className="text-4xl font-bold text-white tracking-tight">
+                        {activeTab === 'ALL' ? 'LATEST DISCUSSIONS' : `${activeTab} ARTICLE FEEDS`}
+                      </h2>
+                    </div>
+                    
+                    {/* Filter Category Tabs directly visible to crawlers in static list */}
+                    <div className="flex flex-wrap gap-2">
+                      {['ALL', 'PC GAMING', 'MOBILE LEGENDS', 'CASINO STRATEGY', 'LOCAL TOURNAMENTS'].map((tab) => (
+                        <button
+                          key={tab}
+                          onClick={() => setActiveTab(tab)}
+                          className={`text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full transition-all border ${
+                            activeTab === tab 
+                              ? 'bg-cyber-cyan text-black border-cyber-cyan' 
+                              : 'bg-white/5 hover:bg-white/10 text-white/60 border-transparent'
+                          }`}
+                        >
+                          {tab === 'ALL' ? 'Show All' : tab}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Search alert if queries are used */}
+                  {searchQuery && (
+                    <div className="mb-6 p-4 rounded-lg bg-cyber-cyan/5 border border-cyber-cyan/20 text-xs text-cyber-cyan">
+                      Found {filteredArticles.length} articles matching your query: "{searchQuery}"
+                    </div>
+                  )}
+
+                  {/* Main static lists containing all 20 High-Quality SEO-Friendly articles for crawlers */}
+                  <div className="space-y-4">
+                    {filteredArticles.map((art, idx) => (
+                      <motion.div 
+                        key={art.slug}
+                        onClick={() => setSelectedSlug(art.slug)}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: Math.min(idx * 0.05, 0.3) }}
+                        className="group flex flex-col sm:flex-row sm:items-center gap-6 p-6 rounded-xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] hover:border-cyber-cyan/30 transition-all cursor-pointer"
+                      >
+                        {/* Dynamic reply counts based on slug hash for aesthetic authority representation */}
+                        <div className="hidden sm:flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-white/5 border border-white/5 group-hover:border-cyber-cyan transition-colors shrink-0">
+                          <span className="text-lg font-bold text-white">
+                            {Math.abs(art.title.length % 40) + 12}
+                          </span>
+                          <span className="text-[8px] uppercase tracking-widest text-white/40">Replies</span>
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded bg-white/10 text-white/60 uppercase tracking-wider">
+                              {art.category}
+                            </span>
+                            <span className="text-[10px] text-white/30 uppercase tracking-widest">{art.date}</span>
+                          </div>
+                          
+                          <h3 className="text-lg font-bold text-white/90 group-hover:text-cyber-cyan transition-colors leading-snug">
+                            {art.title}
+                          </h3>
+                          
+                          <p className="text-sm text-white/40 line-clamp-2 mt-1.5 font-light leading-relaxed">
+                            {art.metaDescription}
+                          </p>
+                          
+                          <div className="flex items-center gap-2 mt-3">
+                            <div className="w-5 h-5 rounded-full bg-white/10 overflow-hidden border border-white/10">
+                              <img src={`https://picsum.photos/seed/${art.author}/20/20`} alt="" />
+                            </div>
+                            <span className="text-xs text-white/40 font-medium">{art.author}</span>
+                            <span className="text-[10px] text-white/20">•</span>
+                            <span className="text-[10px] text-white/35 font-mono">{art.readTime}</span>
+                          </div>
+                        </div>
+
+                        <div className="hidden md:block text-right shrink-0">
+                          <div className="text-sm font-bold text-white/60">
+                            {((Math.abs(art.title.length) * 123) % 800) + 150}
+                          </div>
+                          <div className="text-[8px] uppercase tracking-widest text-white/30">Views</div>
+                        </div>
+                        <ChevronRight className="hidden sm:block w-5 h-5 text-white/20 group-hover:text-cyber-cyan transition-colors shrink-0" />
+                      </motion.div>
+                    ))}
+
+                    {filteredArticles.length === 0 && (
+                      <div className="py-24 text-center text-white/30 border border-dashed border-white/10 rounded-2xl">
+                        No articles found. Try another search query or topic.
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </section>
         </div>
 
