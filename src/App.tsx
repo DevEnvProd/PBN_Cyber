@@ -26,7 +26,7 @@ import ArticleDetail from './components/ArticleDetail';
 const CATEGORIES = [
   { id: 1, name: 'PC GAMING', icon: <Gamepad2 className="w-6 h-6" />, threads: '5 Articles', posts: 'PC, Warzone, Hardware Guides', color: 'from-blue-500/20 to-cyan-500/20' },
   { id: 2, name: 'MOBILE LEGENDS', icon: <TrendingUp className="w-6 h-6" />, threads: '5 Articles', posts: 'MLBB Meta, Counter-Picks', color: 'from-purple-500/20 to-pink-500/20' },
-  { id: 3, name: 'CASINO STRATEGY', icon: <Trophy className="w-6 h-6" />, threads: '5 Articles', posts: 'RTP Guides, Winbox Strategies', color: 'from-amber-500/20 to-orange-500/20' },
+  { id: 3, name: 'CASINO STRATEGY', icon: <Trophy className="w-6 h-6" />, threads: '32 Articles', posts: 'RTP Guides, Winbox Strategies', color: 'from-amber-500/20 to-orange-500/20' },
   { id: 4, name: 'LOCAL TOURNAMENTS', icon: <Users className="w-6 h-6" />, threads: '5 Articles', posts: 'Malaysia Cup, JB Open 2026', color: 'from-emerald-500/20 to-teal-500/20' },
 ];
 
@@ -42,6 +42,31 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Parse article slug from URL query on initial load for crawler indexability
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const articleParam = params.get('article');
+    if (articleParam && ARTICLES.some(a => a.slug === articleParam)) {
+      setSelectedSlug(articleParam);
+      // Wait for layout to mount and scroll down to discussions area
+      setTimeout(() => {
+        const el = document.getElementById("discussions-container");
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 500);
+    }
+  }, []);
+
+  // Update URL search parameters when selectedSlug changes
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (selectedSlug) {
+      url.searchParams.set('article', selectedSlug);
+    } else {
+      url.searchParams.delete('article');
+    }
+    window.history.replaceState({}, '', url.toString());
+  }, [selectedSlug]);
 
   // Filter articles based on active tab and search query
   const filteredArticles = ARTICLES.filter(art => {

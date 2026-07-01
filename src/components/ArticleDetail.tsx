@@ -67,7 +67,7 @@ export default function ArticleDetail({ slug, onBack }: ArticleDetailProps) {
           },
           "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": `https://cyberpulse-gaming.com/article/${article.slug}`
+            "@id": `https://cyberpulse.site/article/${article.slug}`
           }
         })}
       </script>
